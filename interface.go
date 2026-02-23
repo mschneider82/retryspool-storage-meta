@@ -86,7 +86,14 @@ type Backend interface {
 	// batchSize controls how many messages are fetched per backend call (optimization hint)
 	NewMessageIterator(ctx context.Context, state QueueState, batchSize int) (MessageIterator, error)
 
-	// MoveToState moves a message from one queue state to another atomically
+	// MoveToState moves a message from one queue state to another atomically.
+	//
+	// MUST implement Compare-And-Swap (CAS) semantics:
+	// - MUST fail with ErrStateConflict if the message is not currently in fromState
+	// - MUST be atomic: if two concurrent calls race on the same message,
+	// exactly one succeeds and the other returns ErrStateConflict
+	// - MUST NOT allow a time window between check and state change
+	// where another caller could observe stale state
 	MoveToState(ctx context.Context, messageID string, fromState, toState QueueState) error
 
 	// Close closes the metadata storage backend
@@ -96,11 +103,10 @@ type Backend interface {
 // StateCounterBackend extends Backend with fast state counting capabilities
 type StateCounterBackend interface {
 	Backend
-	
+
 	// GetStateCount returns the cached count for a specific state (fast operation)
 	GetStateCount(state QueueState) int64
 }
-
 
 // MessageIterator provides streaming access to messages in a specific state
 type MessageIterator interface {
@@ -108,7 +114,7 @@ type MessageIterator interface {
 	// Returns (metadata, hasMore, error)
 	// When hasMore is false, the iterator is exhausted
 	Next(ctx context.Context) (MessageMetadata, bool, error)
-	
+
 	// Close closes the iterator and releases any resources
 	Close() error
 }
