@@ -36,17 +36,18 @@ func (s QueueState) String() string {
 
 // MessageMetadata contains metadata about a message
 type MessageMetadata struct {
-	ID          string
-	State       QueueState
-	Attempts    int
-	MaxAttempts int
-	NextRetry   time.Time
-	Created     time.Time
-	Updated     time.Time
-	LastError   string
-	Size        int64
-	Priority    int
-	Headers     map[string]string
+	ID              string
+	State           QueueState
+	Attempts        int
+	MaxAttempts     int
+	NextRetry       time.Time
+	Created         time.Time
+	Updated         time.Time
+	LastError       string
+	Size            int64
+	Priority        int
+	Headers         map[string]string
+	RetryPolicyName string
 }
 
 // MessageListOptions contains options for listing messages
